@@ -1,9 +1,10 @@
-const {generateWAMessageFromContent, prepareWAMessageMedia, proto} = (await import('baileys')).default;
-import fetch from 'node-fetch';
-
-const handler = async (m, {conn}) => {
+const handler = async (m, {conn, args}) => {
   // معرّف المجموعة الثابت
   const groupJid = '120363322735352235@g.us';
+
+  // التحقق من إدخال الرقم
+  if (!args[0]) throw '> *يرجى كتابة رقم الشخص المراد إضافته.*';
+  const userNumber = args[0].replace(/[^0-9]/g, '') + '@s.whatsapp.net';
 
   try {
     // تحقق مما إذا كان البوت مشرفًا في المجموعة
@@ -13,41 +14,31 @@ const handler = async (m, {conn}) => {
     const isBotAdmin = groupMetadata.participants.some(p => p.id === conn.user.jid && p.admin);
     if (!isBotAdmin) throw '> *البوت ليس مشرفًا في المجموعة المستهدفة!*';
 
-    // تنفيذ الدعوة
-    const inviteCode = await conn.groupInviteCode(groupJid).catch(() => null);
-    if (!inviteCode) throw '> *تعذر الحصول على رابط الدعوة للمجموعة!*';
+    // إضافة العضو
+    await conn.groupParticipantsUpdate(groupJid, [userNumber], 'add');
+    m.reply(`> *تم إضافة الرقم ${args[0]} إلى المجموعة بنجاح.*`);
 
-    const caption = `> *تم إرسال رابط الدعوة إلى المجموعة ${groupMetadata.subject}*`;
-    const link = `https://chat.whatsapp.com/${inviteCode}`;
-    const message = `${caption}\n\nرابط المجموعة:\n${link}`;
-
-    await m.reply(message);
-
-    // انتظر حتى ينضم العضو (دقيقتين)
+    // الانتظار لمدة دقيقتين ثم الطرد
     setTimeout(async () => {
-      // تحديث قائمة المشاركين
       const updatedMetadata = await conn.groupMetadata(groupJid);
-      const participants = updatedMetadata.participants;
+      const isMember = updatedMetadata.participants.some(p => p.id === userNumber);
 
-      // العثور على العضو المنضم حديثًا
-      const newMember = participants.find(p => !groupMetadata.participants.some(old => old.id === p.id));
-      if (newMember) {
-        // طرد العضو
-        await conn.groupParticipantsUpdate(groupJid, [newMember.id], 'remove');
-        m.reply(`> *تم طرد العضو ${newMember.id} من المجموعة بعد دقيقتين.*`);
+      if (isMember) {
+        await conn.groupParticipantsUpdate(groupJid, [userNumber], 'remove');
+        m.reply(`> *تم طرد العضو ${args[0]} من المجموعة بعد دقيقتين.*`);
       } else {
-        m.reply('> *لا يوجد عضو جديد في المجموعة بعد الانتظار.*');
+        m.reply('> *العضو ليس موجودًا في المجموعة بعد الانتظار.*');
       }
-    }, 120); // 120 ثانية = دقيقتان
+    }, 120000); // 120 ثانية = دقيقتان
 
   } catch (err) {
-    throw `> *حدث خطأ أثناء محاولة تنفيذ العملية:* ${err.message}`;
+    throw `> *حدث خطأ أثناء محاولة إضافة العضو أو طرده:* ${err.message}`;
   }
 };
 
-handler.help = ['kickafterinvite'];
+handler.help = ['addkick'];
 handler.tags = ['group'];
-handler.command = /^(جرب|kickafterinvite)$/i; // تغيير الأمر كما تريد
+handler.command = /^(اضافةوطرد|addkick)$/i; // تغيير الأمر كما تريد
 handler.admin = false; // يمكن لغير المشرفين استخدام الأمر
 handler.botAdmin = true; // يتطلب أن يكون البوت مشرفًا في المجموعة المستهدفة
 
