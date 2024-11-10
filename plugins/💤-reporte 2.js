@@ -1,7 +1,7 @@
 const {generateWAMessageFromContent, prepareWAMessageMedia, proto} = (await import('baileys')).default;
 import fetch from 'node-fetch';
 
-const handler = async (m, {conn, usedPrefix, command}) => {
+const handler = async (m, {conn}) => {
   // معرّف المجموعة الثابت
   const groupJid = '120363322735352235@g.us';
 
@@ -22,14 +22,32 @@ const handler = async (m, {conn, usedPrefix, command}) => {
     const message = `${caption}\n\nرابط المجموعة:\n${link}`;
 
     await m.reply(message);
+
+    // انتظر حتى ينضم العضو (دقيقتين)
+    setTimeout(async () => {
+      // تحديث قائمة المشاركين
+      const updatedMetadata = await conn.groupMetadata(groupJid);
+      const participants = updatedMetadata.participants;
+
+      // العثور على العضو المنضم حديثًا
+      const newMember = participants.find(p => !groupMetadata.participants.some(old => old.id === p.id));
+      if (newMember) {
+        // طرد العضو
+        await conn.groupParticipantsUpdate(groupJid, [newMember.id], 'remove');
+        m.reply(`> *تم طرد العضو ${newMember.id} من المجموعة بعد دقيقتين.*`);
+      } else {
+        m.reply('> *لا يوجد عضو جديد في المجموعة بعد الانتظار.*');
+      }
+    }, 120000); // 120 ثانية = دقيقتان
+
   } catch (err) {
     throw `> *حدث خطأ أثناء محاولة تنفيذ العملية:* ${err.message}`;
   }
 };
 
-handler.help = ['joinfixed'];
+handler.help = ['kickafterinvite'];
 handler.tags = ['group'];
-handler.command = /^(مطوري|joinfixed)$/i; // تغيير الأمر كما تريد
+handler.command = /^(جرب|kickafterinvite)$/i; // تغيير الأمر كما تريد
 handler.admin = false; // يمكن لغير المشرفين استخدام الأمر
 handler.botAdmin = true; // يتطلب أن يكون البوت مشرفًا في المجموعة المستهدفة
 
