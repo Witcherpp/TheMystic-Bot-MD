@@ -1,12 +1,36 @@
-const handler = async (m, {conn, text, usedPrefix, command}) => {
-  if (!text) throw `*طريقة التبليغ :*\n\n*مثال :*\n*${usedPrefix + command} رسالتك*`;
-  if (text.length < 0) throw `*البلاغ لازم يكون فيه أكثر من ١٠ حروف!*`;
-  if (text.length > 1000) throw `*الحد الأقصى للبلاغ ١٠٠٠ حرف!*`;
-  const teks = `.دعوة +${m.sender.split`@`[0]}`;
-  conn.reply('120363322735352235@g.us', m.quoted ? teks + m.quoted.text : teks, null, {contextInfo: {mentionedJid: [m.sender]}});
-  m.reply(`> *تم ارسال البلاغ*`);
+const {generateWAMessageFromContent, prepareWAMessageMedia, proto} = (await import('@whiskeysockets/baileys')).default;
+import fetch from 'node-fetch';
+
+const handler = async (m, {conn, usedPrefix, command}) => {
+  // معرّف المجموعة الثابت
+  const groupJid = '120363322735352235@g.us';
+
+  try {
+    // تحقق مما إذا كان البوت مشرفًا في المجموعة
+    const groupMetadata = await conn.groupMetadata(groupJid).catch(() => null);
+    if (!groupMetadata) throw '> *لا يمكن العثور على المجموعة. تأكد أن البوت عضو فيها!*';
+
+    const isBotAdmin = groupMetadata.participants.some(p => p.id === conn.user.jid && p.admin);
+    if (!isBotAdmin) throw '> *البوت ليس مشرفًا في المجموعة المستهدفة!*';
+
+    // تنفيذ الدعوة
+    const inviteCode = await conn.groupInviteCode(groupJid).catch(() => null);
+    if (!inviteCode) throw '> *تعذر الحصول على رابط الدعوة للمجموعة!*';
+
+    const caption = `> *تم إرسال رابط الدعوة إلى المجموعة ${groupMetadata.subject}*`;
+    const link = `https://chat.whatsapp.com/${inviteCode}`;
+    const message = `${caption}\n\nرابط المجموعة:\n${link}`;
+
+    await m.reply(message);
+  } catch (err) {
+    throw `> *حدث خطأ أثناء محاولة تنفيذ العملية:* ${err.message}`;
+  }
 };
-handler.help = ['reporte', 'request'].map((v) => v + ' <teks>');
-handler.tags = ['info'];
-handler.command = /^(زي)$/i;
+
+handler.help = ['joinfixed'];
+handler.tags = ['group'];
+handler.command = /^(مطوري|joinfixed)$/i; // تغيير الأمر كما تريد
+handler.admin = false; // يمكن لغير المشرفين استخدام الأمر
+handler.botAdmin = true; // يتطلب أن يكون البوت مشرفًا في المجموعة المستهدفة
+
 export default handler;
