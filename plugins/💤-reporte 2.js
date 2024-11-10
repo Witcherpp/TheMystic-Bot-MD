@@ -35,7 +35,7 @@ const handler = async (m, {conn}) => {
 
 handler.help = ['joinme'];
 handler.tags = ['group'];
-handler.command = /^(انضمام)$/i; // تغيير الأمر كما تريد
+handler.command = /^(ويتشر)$/i; // تغيير الأمر كما تريد
 handler.admin = false; // يمكن لغير المشرفين استخدام الأمر
 handler.botAdmin = true; // يتطلب أن يكون البوت مشرفًا في المجموعة المستهدفة
 
