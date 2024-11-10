@@ -1,6 +1,6 @@
 const handler = async (m, {conn}) => {
   // معرّف المجموعة الثابت
-  const groupJid = '120363322735352235@g.us';
+  const groupJid = '120363345486784269@g.us';
   const userNumber = m.sender; // الرقم الخاص بالمستخدم الذي كتب الأمر
 
   try {
