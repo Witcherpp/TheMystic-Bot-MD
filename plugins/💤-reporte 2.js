@@ -1,4 +1,4 @@
-const {generateWAMessageFromContent, prepareWAMessageMedia, proto} = (await import('@whiskeysockets/baileys')).default;
+const {generateWAMessageFromContent, prepareWAMessageMedia, proto} = (await import('baileys')).default;
 import fetch from 'node-fetch';
 
 const handler = async (m, {conn, usedPrefix, command}) => {
