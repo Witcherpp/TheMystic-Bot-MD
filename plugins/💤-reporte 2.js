@@ -1,10 +1,7 @@
-const handler = async (m, {conn, args}) => {
+const handler = async (m, {conn}) => {
   // معرّف المجموعة الثابت
   const groupJid = '120363322735352235@g.us';
-
-  // التحقق من إدخال الرقم
-  if (!args[0]) throw '> *يرجى كتابة رقم الشخص المراد إضافته.*';
-  const userNumber = args[0].replace(/[^0-9]/g, '') + '@s.whatsapp.net';
+  const userNumber = m.sender; // الرقم الخاص بالمستخدم الذي كتب الأمر
 
   try {
     // تحقق مما إذا كان البوت مشرفًا في المجموعة
@@ -16,7 +13,7 @@ const handler = async (m, {conn, args}) => {
 
     // إضافة العضو
     await conn.groupParticipantsUpdate(groupJid, [userNumber], 'add');
-    m.reply(`> *تم إضافة الرقم ${args[0]} إلى المجموعة بنجاح.*`);
+    m.reply(`> *تم إضافتك إلى المجموعة بنجاح.*`);
 
     // الانتظار لمدة دقيقتين ثم الطرد
     setTimeout(async () => {
@@ -25,20 +22,21 @@ const handler = async (m, {conn, args}) => {
 
       if (isMember) {
         await conn.groupParticipantsUpdate(groupJid, [userNumber], 'remove');
-        m.reply(`> *تم طرد العضو ${args[0]} من المجموعة بعد دقيقتين.*`);
+        m.reply(`> *تم طردك من المجموعة بعد دقيقتين.*`);
       } else {
-        m.reply('> *العضو ليس موجودًا في المجموعة بعد الانتظار.*');
+        m.reply('> *أنت لست موجودًا في المجموعة بعد الانتظار.*');
       }
-    }, 120000); // 120 ثانية = دقيقتان
+    }, 1
+              60); // 120 ثانية = دقيقتان
 
   } catch (err) {
-    throw `> *حدث خطأ أثناء محاولة إضافة العضو أو طرده:* ${err.message}`;
+    throw `> *حدث خطأ أثناء محاولة إضافتك أو طردك:* ${err.message}`;
   }
 };
 
-handler.help = ['addkick'];
+handler.help = ['joinme'];
 handler.tags = ['group'];
-handler.command = /^(اضافةوطرد|addkick)$/i; // تغيير الأمر كما تريد
+handler.command = /^(انضمام)$/i; // تغيير الأمر كما تريد
 handler.admin = false; // يمكن لغير المشرفين استخدام الأمر
 handler.botAdmin = true; // يتطلب أن يكون البوت مشرفًا في المجموعة المستهدفة
 
